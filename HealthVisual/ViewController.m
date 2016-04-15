@@ -206,7 +206,11 @@
             }];
         });
         
+        /*find another way to keep the camera going*/
         [self.session stopRunning];
+
+        /*[self.session startRunning];*/
+        
     }
 }
 
