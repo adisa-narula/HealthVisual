@@ -16,17 +16,11 @@
 @interface ViewController () <AVCaptureMetadataOutputObjectsDelegate>
 
 @property(nonatomic, strong) AVCaptureSession *session;
-@property(nonatomic, strong) UIView *previewView;
 @property(nonatomic, strong) AVCaptureVideoPreviewLayer *previewLayer;
+@property(nonatomic, strong) UIView *previewView;
 @property(nonatomic, strong) IBOutlet UILabel *label;
 @property(nonatomic, strong) Request *r;
 @property(nonatomic, strong) Border *border;
-
-//labels
-@property(nonatomic, strong) UIImageView *gluten;
-@property(nonatomic, strong) UIImageView *fish;
-@property(nonatomic, strong) UIImageView *nuts;
-@property(nonatomic, strong) UIImageView *lactose;
 
 //array of allergens
 @property(nonatomic, strong) NSMutableDictionary *allergens;
@@ -150,7 +144,9 @@
         
         self.picture = [[UIImageView alloc] initWithImage: [UIImage imageNamed:self.allergens[allergen]]];
         [self.picture setFrame:CGRectMake(x, y, 80, 80)];
-        self.picture.alpha = 0.8;
+        self.picture.alpha = 0.0;
+        
+        [UIView beginAnimations:@"fade in" context:nil];
         
         [[self view] addSubview:self.picture];
         x+= 90; //move x axis
@@ -207,9 +203,8 @@
         });
         
         /*find another way to keep the camera going*/
-        [self.session stopRunning];
+        /*[self.session stopRunning];*/
 
-        /*[self.session startRunning];*/
         
     }
 }
