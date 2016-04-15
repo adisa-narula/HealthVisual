@@ -144,7 +144,14 @@
         
         self.picture = [[UIImageView alloc] initWithImage: [UIImage imageNamed:self.allergens[allergen]]];
         [self.picture setFrame:CGRectMake(x, y, 80, 80)];
-        self.picture.alpha = 0.11;
+        self.picture.alpha = 0.0;
+        
+        
+        /*add fade in animation*/
+        [UIView beginAnimations:@"fade in" context:nil];
+        [UIView setAnimationDuration:50.0];
+        self.picture.alpha = 0.6;
+        [UIView commitAnimations];
         
         [[self view] addSubview:self.picture];
         x+= 90; //move x axis
@@ -169,7 +176,7 @@
             
             AVMetadataMachineReadableCodeObject *recognizedObject = metadataObjects.firstObject;
             if (recognizedObject.stringValue != nil){
-                [self.label setFont: [UIFont fontWithName:@"KohinoorDevanagari-Light" size:18]];
+                [self.label setFont: [UIFont fontWithName:@"Helvetica" size:18]];
                 self.label.text = recognizedObject.stringValue;
                 
             } else {
