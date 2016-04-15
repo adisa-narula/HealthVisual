@@ -21,11 +21,11 @@
 @property(nonatomic, strong) IBOutlet UILabel *label;
 @property(nonatomic, strong) Request *r;
 @property(nonatomic, strong) Border *border;
+@property (nonatomic, assign) int recognize;
 
 //array of allergens
 @property(nonatomic, strong) NSMutableDictionary *allergens;
 @property(nonatomic, strong) UIImageView *picture;
-
 
 @end
 
@@ -43,6 +43,7 @@
     
     tapBackground.numberOfTapsRequired = 1;
     [self.view addGestureRecognizer:tapBackground];
+    self.recognize = 0;
     
     //start AVCaptureSession
     self.session = [[AVCaptureSession alloc] init];
@@ -146,10 +147,9 @@
         [self.picture setFrame:CGRectMake(x, y, 80, 80)];
         self.picture.alpha = 0.0;
         
-        
         /*add fade in animation*/
         [UIView beginAnimations:@"fade in" context:nil];
-        [UIView setAnimationDuration:50.0];
+        [UIView setAnimationDuration:5.0];
         self.picture.alpha = 0.6;
         [UIView commitAnimations];
         
@@ -163,6 +163,8 @@
 //    NSLog(@"Tapped background");
     
     //reset label and start another session
+    [self.picture removeFromSuperview];
+    self.recognize = 0;
     [self setLabel];
     [self.session startRunning];
 }
@@ -176,35 +178,40 @@
             
             AVMetadataMachineReadableCodeObject *recognizedObject = metadataObjects.firstObject;
             if (recognizedObject.stringValue != nil){
-                [self.label setFont: [UIFont fontWithName:@"Helvetica" size:18]];
+                
+                [self.label setFont: [UIFont fontWithName:@"Helvetica" size:20]];
                 self.label.text = recognizedObject.stringValue;
+                self.recognize += 1;
                 
             } else {
-                //reset label
                 [self setLabel];
             }
             //make request object and call request
-             self.r = [[Request alloc] initRequest];
-
-            [self.r makeRequest:self.label.text done:^(NSDictionary *json) {
-                //data stored in json
+            
+            
+            //do the request only once
+            if (self.recognize <= 1) {
                 
-                NSMutableArray *contains = [[NSMutableArray alloc]init];
-                
-                //print all of the allergies
-                for (NSDictionary *allergies in json[@"product"][@"allergens"]) {
+                self.r = [[Request alloc] initRequest];
+                [self.r makeRequest:self.label.text done:^(NSDictionary *json) {
+                    //data stored in json
                     
-                    //get key and value - make sure image of allergen is there
-                    NSInteger value = [allergies[@"allergen_value"] intValue];
-                    NSString *key = [NSString stringWithFormat: @"%@", allergies[@"allergen_name"]];
+                    NSMutableArray *contains = [[NSMutableArray alloc]init];
                     
-                    if ((value > 1) && (self.allergens[key] != nil)) {
-                        [contains addObject:key];
-                        /*NSLog(@"key: %@", key);*/
+                    //print all of the allergies
+                    for (NSDictionary *allergies in json[@"product"][@"allergens"]) {
+                        
+                        //get key and value - make sure image of allergen is there
+                        NSInteger value = [allergies[@"allergen_value"] intValue];
+                        NSString *key = [NSString stringWithFormat: @"%@", allergies[@"allergen_name"]];
+                        
+                        if ((value > 1) && (self.allergens[key] != nil)) {
+                            [contains addObject:key];
+                        }
                     }
-                }
-                [self setImage: contains];
-            }];
+                    [self setImage: contains];
+                }];
+            }
         });
         
         /*find another way to keep the camera going*/
@@ -221,17 +228,16 @@
 -(void) setLabel{
     //initialize label and draw a rectangle around it as a frame
     //find the label into the frame
-    self.label.frame = CGRectMake(0, self.view.bounds.size.height-75, self.view.bounds.size.width, 80);
+    self.label.frame = CGRectMake(0, self.view.bounds.size.height-80, self.view.bounds.size.width, 80);
     self.label.autoresizingMask = UIViewAutoresizingFlexibleTopMargin;
     self.label.backgroundColor = [UIColor colorWithWhite:0.15 alpha:0.65];
     self.label.textColor = [UIColor whiteColor];
     self.label.textAlignment = NSTextAlignmentCenter;
-    [self.label setFont: [UIFont fontWithName:@"KohinoorDevanagari-Light" size:17]];
+    [self.label setFont: [UIFont fontWithName:@"Helvetica" size:17]];
     self.label.text = @"Scan a food product's code to display valuable nutritional and diet information";
     
     self.label.lineBreakMode = NSLineBreakByWordWrapping;
     self.label.numberOfLines = 0;
-    
 }
 
 - (void)didReceiveMemoryWarning {
