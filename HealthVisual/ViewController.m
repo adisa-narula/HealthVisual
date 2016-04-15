@@ -144,9 +144,7 @@
         
         self.picture = [[UIImageView alloc] initWithImage: [UIImage imageNamed:self.allergens[allergen]]];
         [self.picture setFrame:CGRectMake(x, y, 80, 80)];
-        self.picture.alpha = 0.0;
-        
-        [UIView beginAnimations:@"fade in" context:nil];
+        self.picture.alpha = 0.11;
         
         [[self view] addSubview:self.picture];
         x+= 90; //move x axis
@@ -204,7 +202,6 @@
         
         /*find another way to keep the camera going*/
         /*[self.session stopRunning];*/
-
         
     }
 }
