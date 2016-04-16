@@ -26,6 +26,7 @@
 //array of allergens
 @property(nonatomic, strong) NSMutableDictionary *allergens;
 @property(nonatomic, strong) NSMutableArray *picture;
+@property(nonatomic, strong) UIImageView *blur;
 
 @end
 
@@ -149,12 +150,13 @@
         [allergen setFrame:CGRectMake(x, y, 80, 80)];
         allergen.alpha = 0.0;
         
-        [UIView beginAnimations:@"fade in" context:nil];
-        [UIView setAnimationDuration:5.0];
-        allergen.alpha = 0.6;
-        [UIView commitAnimations];
+        [UIView animateWithDuration:3 animations:^{
+            allergen.alpha = 0.6;
+        }completion:^(BOOL finished) {}];
         
+        //add to subview
         [[self view] addSubview:allergen];
+        
         x+= 90; //move x axis
     }
 }
@@ -164,7 +166,29 @@
     for (UIImageView *allergen in self.picture) {
         [allergen removeFromSuperview];
     }
+}
+
+-(void) blurBackground {
     
+    //initialize imageview
+    self.blur = [[UIImageView alloc]initWithFrame:CGRectMake(0,0,self.view.bounds.size.width, self.view.bounds.size.height)];
+    self.blur.alpha = 0; //set alpha to 0
+    
+    UIVisualEffect *blurEffect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleLight];
+    UIVisualEffectView *visualView = [[UIVisualEffectView alloc] initWithEffect:blurEffect];
+    visualView.frame = self.blur.bounds;
+    
+    [self.blur addSubview:visualView];
+    [self.view addSubview:self.blur];
+    
+    //add animation block
+    [UIView animateWithDuration:3.0
+                          delay:0.0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.blur.alpha = 1.0; //blur background in
+                     }
+                     completion:nil];
 }
 
 -(void)backgroundTapped: (UITapGestureRecognizer *)recognizer
@@ -175,6 +199,7 @@
     self.recognize = 0;
     [self removeIcon];
     [self setLabel];
+    [self.blur removeFromSuperview];
     [self.picture removeAllObjects];
     [self.session startRunning];
 }
@@ -186,24 +211,31 @@
         //passes work back to the main thread
         dispatch_async(dispatch_get_main_queue(), ^{
             
+            //added barcode variable
+            
             AVMetadataMachineReadableCodeObject *recognizedObject = metadataObjects.firstObject;
+            NSString *barcode;
             if (recognizedObject.stringValue != nil){
                 
+                //changes made here
+                
                 [self.label setFont: [UIFont fontWithName:@"Helvetica" size:20]];
-                self.label.text = recognizedObject.stringValue;
+                self.label.text = @"Barcode detected";
                 self.recognize += 1;
                 
+                //save value in another string
+                barcode = recognizedObject.stringValue;
             } else {
                 [self setLabel];
             }
             //make request object and call request
-            
-            
             //do the request only once
+            
+            
             if (self.recognize <= 1) {
                 
                 self.r = [[Request alloc] initRequest];
-                [self.r makeRequest:self.label.text done:^(NSDictionary *json) {
+                [self.r makeRequest:barcode done:^(NSDictionary *json) {
                     //data stored in json
                     
                     /*NSMutableArray *contains = [[NSMutableArray alloc]init];*/
@@ -219,6 +251,7 @@
                             [self.picture addObject:[[UIImageView alloc] initWithImage: [UIImage imageNamed:self.allergens[key]]]];
                         }
                     }
+                    [self blurBackground];
                     [self setImage: self.picture];
                 }];
             }
