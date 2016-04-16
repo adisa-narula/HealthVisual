@@ -25,7 +25,7 @@
 
 //array of allergens
 @property(nonatomic, strong) NSMutableDictionary *allergens;
-@property(nonatomic, strong) UIImageView *picture;
+@property(nonatomic, strong) NSMutableArray *picture;
 
 @end
 
@@ -41,8 +41,10 @@
     //add background tap
     UITapGestureRecognizer *tapBackground = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(backgroundTapped:)];
     
+    //initilization
     tapBackground.numberOfTapsRequired = 1;
     [self.view addGestureRecognizer:tapBackground];
+    self.picture = [[NSMutableArray alloc]init];
     self.recognize = 0;
     
     //start AVCaptureSession
@@ -141,21 +143,28 @@
     
     NSInteger x = 15;
     NSInteger y = 30;
-    for (NSString *allergen in allergens) {
+    
+    for (UIImageView *allergen in allergens) {
         
-        self.picture = [[UIImageView alloc] initWithImage: [UIImage imageNamed:self.allergens[allergen]]];
-        [self.picture setFrame:CGRectMake(x, y, 80, 80)];
-        self.picture.alpha = 0.0;
+        [allergen setFrame:CGRectMake(x, y, 80, 80)];
+        allergen.alpha = 0.0;
         
-        /*add fade in animation*/
         [UIView beginAnimations:@"fade in" context:nil];
         [UIView setAnimationDuration:5.0];
-        self.picture.alpha = 0.6;
+        allergen.alpha = 0.6;
         [UIView commitAnimations];
         
-        [[self view] addSubview:self.picture];
+        [[self view] addSubview:allergen];
         x+= 90; //move x axis
     }
+}
+
+-(void) removeIcon {
+    
+    for (UIImageView *allergen in self.picture) {
+        [allergen removeFromSuperview];
+    }
+    
 }
 
 -(void)backgroundTapped: (UITapGestureRecognizer *)recognizer
@@ -163,9 +172,10 @@
 //    NSLog(@"Tapped background");
     
     //reset label and start another session
-    [self.picture removeFromSuperview];
     self.recognize = 0;
+    [self removeIcon];
     [self setLabel];
+    [self.picture removeAllObjects];
     [self.session startRunning];
 }
 
@@ -196,7 +206,7 @@
                 [self.r makeRequest:self.label.text done:^(NSDictionary *json) {
                     //data stored in json
                     
-                    NSMutableArray *contains = [[NSMutableArray alloc]init];
+                    /*NSMutableArray *contains = [[NSMutableArray alloc]init];*/
                     
                     //print all of the allergies
                     for (NSDictionary *allergies in json[@"product"][@"allergens"]) {
@@ -206,17 +216,16 @@
                         NSString *key = [NSString stringWithFormat: @"%@", allergies[@"allergen_name"]];
                         
                         if ((value > 1) && (self.allergens[key] != nil)) {
-                            [contains addObject:key];
+                            [self.picture addObject:[[UIImageView alloc] initWithImage: [UIImage imageNamed:self.allergens[key]]]];
                         }
                     }
-                    [self setImage: contains];
+                    [self setImage: self.picture];
                 }];
             }
         });
         
         /*find another way to keep the camera going*/
         /*[self.session stopRunning];*/
-        
     }
 }
 
